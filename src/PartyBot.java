@@ -2,18 +2,23 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 
 import com.botticelli.bot.Bot;
 import com.botticelli.bot.request.methods.MessageToSend;
+import com.botticelli.bot.request.methods.PhotoReferenceToSend;
 import com.botticelli.bot.request.methods.types.CallbackQuery;
 import com.botticelli.bot.request.methods.types.ChosenInlineResult;
+import com.botticelli.bot.request.methods.types.InlineKeyboardButton;
+import com.botticelli.bot.request.methods.types.InlineKeyboardMarkup;
 import com.botticelli.bot.request.methods.types.InlineQuery;
 import com.botticelli.bot.request.methods.types.KeyboardButton;
 import com.botticelli.bot.request.methods.types.Message;
 import com.botticelli.bot.request.methods.types.ParseMode;
+import com.botticelli.bot.request.methods.types.PhotoSize;
 import com.botticelli.bot.request.methods.types.PreCheckoutQuery;
 import com.botticelli.bot.request.methods.types.ReplyKeyboardMarkupWithButtons;
 import com.botticelli.bot.request.methods.types.ShippingQuery;
@@ -21,19 +26,26 @@ import com.botticelli.bot.request.methods.types.ShippingQuery;
 
 public class PartyBot extends Bot{
 
-	private HashSet<Long> authorizedUsers;
+	private long boss;
 	private ReplyKeyboardMarkupWithButtons mainMenu;
+	private boolean active = true; 
+	private HashMap<Long, Integer> banRegister;
+	private HashSet<Long> banned;
+	private final int banLimit = 5;
 	
 	public PartyBot(String token) throws FileNotFoundException {
 		super(token);
 
-		authorizedUsers = new HashSet<>();
+		banRegister = new HashMap<>();
+		banned = new HashSet<>();
+		
+		
 		try (Scanner s = new Scanner(new File(Main.filePath + Constants.AUTHORIZEDUSERS)))
 		{
 			while (s.hasNext())
 			{
-				long l = s.nextLong();
-				authorizedUsers.add(l);
+				boss = s.nextLong();
+				
 			}
 		}
 		
@@ -65,8 +77,29 @@ public class PartyBot extends Bot{
 	}
 
 	@Override
-	public void callback_query(CallbackQuery arg0) {
-		// TODO Auto-generated method stub
+	public void callback_query(CallbackQuery c) {
+		
+		
+		String[] values = c.getData().split(Constants.SEPARATOR);
+		CallBackCodes cbc = CallBackCodes.fromString(values[0]);
+		
+		switch(cbc)
+		{
+		case PHOTOYES:
+			downloadPhotos(c.getMessage().getPhoto());
+			break;
+		case PHOTONO:
+			updateBanRegister(Long.parseLong(values[1]));
+			break;
+        case MUSICYES:
+			
+			break;
+        
+        case MUSICNO:
+        	updateBanRegister(Long.parseLong(values[1]));
+	        break;
+		}
+		
 		
 	}
 
@@ -155,9 +188,36 @@ public class PartyBot extends Bot{
 	}
 
 	@Override
-	public void photoMessage(Message arg0) {
-		// TODO Auto-generated method stub
+	public void photoMessage(Message m) {
+		if(!control(m))
+			return;
+		if(m.getFrom().getId() == boss)
+		{
+			downloadPhotos(m.getPhoto());
+			return;
+		}
 		
+		List<List<InlineKeyboardButton>> inlKeyboard = new ArrayList<List<InlineKeyboardButton>>();
+		List<InlineKeyboardButton> line = new ArrayList<>();
+		InlineKeyboardButton button = new InlineKeyboardButton(Constants.YES);
+		button.setCallback_data(CallBackCodes.PHOTOYES.toString() + Constants.SEPARATOR);
+		line.add(button);
+		
+		button = new InlineKeyboardButton(Constants.NO);
+		button.setCallback_data(CallBackCodes.PHOTONO.toString() + Constants.SEPARATOR +	m.getFrom().getId() );
+		line.add(button);
+		
+		inlKeyboard.add(line);
+		
+		String bigPhotoID = m.getPhoto()
+				.stream()
+				.reduce(m.getPhoto().get(0), (p1,p2) -> {if(p1.getfileSize() > p2.getfileSize()) return p1; else return p2;})
+				.getFileID();
+		
+		PhotoReferenceToSend prts = new PhotoReferenceToSend(boss, bigPhotoID);
+		prts.setReplyMarkup(new InlineKeyboardMarkup(inlKeyboard));
+		
+		sendPhotobyReference(prts);
 	}
 
 	@Override
@@ -193,7 +253,11 @@ public class PartyBot extends Bot{
 	@Override
 	public void textMessage(Message m) {
 
-		if (!authorizedUsers.contains(m.getFrom().getId())) 
+		if(!control(m))
+			return;
+		
+		
+		if (boss != m.getFrom().getId()) 
 			return;
 		
 		if(m.getText().equals(Constants.PREVTRACK))
@@ -275,7 +339,6 @@ public class PartyBot extends Bot{
 		try {
 			Runtime.getRuntime().exec("cmd /C \"\"C:\\Program Files (x86)\\AIMP\\AIMP.exe\"\"" + command);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return false;
 		}
@@ -283,4 +346,42 @@ public class PartyBot extends Bot{
 		return true;
 	}
 	
+	
+	public boolean control(Message m)
+	{
+		return active && (!banned.contains(m.getFrom().getId()));
+	}
+	
+	
+	public void updateBanRegister(long evil)
+	{
+		if(!banRegister.containsKey(evil))
+		{
+			banRegister.put(evil, 1);
+			return;
+		}
+		int newValue = banRegister.get(evil) + 1;
+		
+		if(newValue >= banLimit)
+			banned.add(evil);
+	
+		banRegister.put(evil, newValue);	
+		return;
+	}
+	
+	public void downloadPhotos(List<PhotoSize> photos)
+	{
+		String bigPhotoID = photos
+				.stream()
+				.reduce(photos.get(0), (p1,p2) -> {if(p1.getfileSize() > p2.getfileSize()) return p1; else return p2;})
+				.getFileID();
+		
+		String smallPhotoID = photos
+				.stream()
+				.reduce(photos.get(0), (p1,p2) -> {if(p1.getfileSize() < p2.getfileSize()) return p1; else return p2;})
+				.getFileID();
+		
+		downloadFileFromTelegramServer(bigPhotoID, Constants.PHOTOFOLDER + bigPhotoID + ".png");
+		downloadFileFromTelegramServer(smallPhotoID, Constants.TILESFOLDER + smallPhotoID + ".png");
+	}
 }
