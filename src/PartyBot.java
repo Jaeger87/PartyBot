@@ -10,6 +10,7 @@ import java.util.Scanner;
 import com.botticelli.bot.Bot;
 import com.botticelli.bot.request.methods.MessageToSend;
 import com.botticelli.bot.request.methods.PhotoReferenceToSend;
+import com.botticelli.bot.request.methods.types.Audio;
 import com.botticelli.bot.request.methods.types.CallbackQuery;
 import com.botticelli.bot.request.methods.types.ChosenInlineResult;
 import com.botticelli.bot.request.methods.types.InlineKeyboardButton;
@@ -43,12 +44,8 @@ public class PartyBot extends Bot{
 		try (Scanner s = new Scanner(new File(Main.filePath + Constants.AUTHORIZEDUSERS)))
 		{
 			while (s.hasNext())
-			{
 				boss = s.nextLong();
-				
-			}
 		}
-		
 		
 		//creating the keyboard for the menu
 		List<List<KeyboardButton>> keyboard = new ArrayList<List<KeyboardButton>>();
@@ -71,8 +68,29 @@ public class PartyBot extends Bot{
 	}
 
 	@Override
-	public void audioMessage(Message arg0) {
-		// TODO Auto-generated method stub
+	public void audioMessage(Message m) {
+		
+		if(!control(m))
+			return;
+		
+		if(m.getFrom().getId() == boss)
+		{
+			addTrack(m.getAudio());
+			return;
+		}
+		
+
+		List<List<InlineKeyboardButton>> inlKeyboard = new ArrayList<List<InlineKeyboardButton>>();
+		List<InlineKeyboardButton> line = new ArrayList<>();
+		InlineKeyboardButton button = new InlineKeyboardButton(Constants.YES);
+		button.setCallback_data(CallBackCodes.MUSICYES.toString() + Constants.SEPARATOR);
+		line.add(button);
+		
+		button = new InlineKeyboardButton(Constants.NO);
+		button.setCallback_data(CallBackCodes.MUSICNO.toString() + Constants.SEPARATOR +	m.getFrom().getId() );
+		line.add(button);
+		
+		inlKeyboard.add(line);
 		
 	}
 
@@ -92,7 +110,7 @@ public class PartyBot extends Bot{
 			updateBanRegister(Long.parseLong(values[1]));
 			break;
         case MUSICYES:
-			
+        	addTrack(c.getMessage().getAudio());
 			break;
         
         case MUSICNO:
@@ -105,13 +123,11 @@ public class PartyBot extends Bot{
 
 	@Override
 	public void chose_inline_result(ChosenInlineResult arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void contactMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -135,13 +151,11 @@ public class PartyBot extends Bot{
 
 	@Override
 	public void groupChatPhotoDeleteMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void inLineQuery(InlineQuery arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -383,5 +397,11 @@ public class PartyBot extends Bot{
 		
 		downloadFileFromTelegramServer(bigPhotoID, Constants.PHOTOFOLDER + bigPhotoID + ".png");
 		downloadFileFromTelegramServer(smallPhotoID, Constants.TILESFOLDER + smallPhotoID + ".png");
+	}
+	
+	public void addTrack(Audio music)
+	{
+		File f = downloadFileFromTelegramServer(music, Constants.MUSICFOLDER + music.getFileID() + ".mp3");
+		aimpCommand("/INSERT " + f.getAbsolutePath());
 	}
 }

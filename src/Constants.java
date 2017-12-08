@@ -11,7 +11,8 @@ public class Constants {
 	public static final String VOLDOWN = "🔈";
 	public static final String VOLUP = "🔊";
 	public static final String PHOTOFOLDER = "photos/";
-	public static final String TILESFOLDER = "tiles/";   
+	public static final String TILESFOLDER = "tiles/";
+	public static final String MUSICFOLDER = "music/"; 
 	public static final String YES = "Si";
 	public static final String NO = "No 💀";
 	public static final String SEPARATOR = ";";
