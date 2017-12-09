@@ -1,13 +1,18 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 import com.botticelli.bot.Bot;
+import com.botticelli.bot.request.methods.AudioReferenceToSend;
+import com.botticelli.bot.request.methods.DocumentFileToSend;
+import com.botticelli.bot.request.methods.DocumentReferenceToSend;
 import com.botticelli.bot.request.methods.MessageToSend;
 import com.botticelli.bot.request.methods.PhotoReferenceToSend;
 import com.botticelli.bot.request.methods.types.Audio;
@@ -24,12 +29,18 @@ import com.botticelli.bot.request.methods.types.PreCheckoutQuery;
 import com.botticelli.bot.request.methods.types.ReplyKeyboardMarkupWithButtons;
 import com.botticelli.bot.request.methods.types.ShippingQuery;
 
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.util.Zip4jConstants;
+
 
 public class PartyBot extends Bot{
 
 	private long boss;
 	private ReplyKeyboardMarkupWithButtons mainMenu;
 	private boolean active = true; 
+	private HashSet<Long> users;
 	private HashMap<Long, Integer> banRegister;
 	private HashSet<Long> banned;
 	private final int banLimit = 5;
@@ -39,7 +50,7 @@ public class PartyBot extends Bot{
 
 		banRegister = new HashMap<>();
 		banned = new HashSet<>();
-		
+		users = new HashSet<>();
 		
 		try (Scanner s = new Scanner(new File(Main.filePath + Constants.AUTHORIZEDUSERS)))
 		{
@@ -69,7 +80,7 @@ public class PartyBot extends Bot{
 
 	@Override
 	public void audioMessage(Message m) {
-		
+		users.add(m.getFrom().getId());
 		if(!control(m))
 			return;
 		
@@ -92,11 +103,18 @@ public class PartyBot extends Bot{
 		
 		inlKeyboard.add(line);
 		
+		AudioReferenceToSend arts = new AudioReferenceToSend(boss, m.getAudio().getFileID());
+		arts.setReplyMarkup(new InlineKeyboardMarkup(inlKeyboard));
+		
+		sendAudiobyReference(arts);
+		
 	}
 
 	@Override
 	public void callback_query(CallbackQuery c) {
 		
+		if(!active)
+			return;
 		
 		String[] values = c.getData().split(Constants.SEPARATOR);
 		CallBackCodes cbc = CallBackCodes.fromString(values[0]);
@@ -203,6 +221,8 @@ public class PartyBot extends Bot{
 
 	@Override
 	public void photoMessage(Message m) {
+		
+		users.add(m.getFrom().getId());
 		if(!control(m))
 			return;
 		if(m.getFrom().getId() == boss)
@@ -267,12 +287,24 @@ public class PartyBot extends Bot{
 	@Override
 	public void textMessage(Message m) {
 
+		users.add(m.getFrom().getId());
+		
 		if(!control(m))
 			return;
 		
 		
 		if (boss != m.getFrom().getId()) 
 			return;
+		
+		
+		if(m.getText().equals(Constants.STOPPARTY))
+		{
+			users.remove(boss);
+			active = false;
+			zipPhotos();
+			mosaic();
+			return;
+		}
 		
 		if(m.getText().equals(Constants.PREVTRACK))
 		{
@@ -344,7 +376,6 @@ public class PartyBot extends Bot{
 
 	@Override
 	public void voiceMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -403,5 +434,50 @@ public class PartyBot extends Bot{
 	{
 		File f = downloadFileFromTelegramServer(music, Constants.MUSICFOLDER + music.getFileID() + ".mp3");
 		aimpCommand("/INSERT " + f.getAbsolutePath());
+	}
+	
+	
+	public void zipPhotos()
+	{
+		try {
+			
+			Files.deleteIfExists(new File("photos.zip").toPath());
+			
+			ZipFile zipFile = new ZipFile("photos.zip");			
+			ZipParameters parameters = new ZipParameters();
+			parameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
+
+			parameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+			
+			zipFile.addFolder("photos", parameters);
+			
+			Message m = sendDocumentFile(new DocumentFileToSend(boss, zipFile.getFile()));
+			
+			String fileId = m.getDocument().getFileID();
+			
+
+			try {
+				TimeUnit.MILLISECONDS.sleep(800);
+			} catch (InterruptedException e) {
+				
+				e.printStackTrace();
+			}
+			
+			for(Long user : users)
+			{
+				sendDocumentbyReference(new DocumentReferenceToSend(user, fileId));
+			}
+			
+		} catch (ZipException e) {
+			e.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+	
+	public void mosaic()
+	{
+		
 	}
 }

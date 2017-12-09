@@ -16,4 +16,5 @@ public class Constants {
 	public static final String YES = "Si";
 	public static final String NO = "No 💀";
 	public static final String SEPARATOR = ";";
+	public static final String STOPPARTY = "/stop";
 }
