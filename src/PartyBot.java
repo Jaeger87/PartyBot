@@ -28,6 +28,7 @@ import com.botticelli.bot.request.methods.types.PhotoSize;
 import com.botticelli.bot.request.methods.types.PreCheckoutQuery;
 import com.botticelli.bot.request.methods.types.ReplyKeyboardMarkupWithButtons;
 import com.botticelli.bot.request.methods.types.ShippingQuery;
+import com.botticelli.bot.request.methods.types.User;
 
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -44,6 +45,7 @@ public class PartyBot extends Bot{
 	private HashMap<Long, Integer> banRegister;
 	private HashSet<Long> banned;
 	private final int banLimit = 5;
+	
 	
 	public PartyBot(String token) throws FileNotFoundException {
 		super(token);
@@ -105,6 +107,7 @@ public class PartyBot extends Bot{
 		
 		AudioReferenceToSend arts = new AudioReferenceToSend(boss, m.getAudio().getFileID());
 		arts.setReplyMarkup(new InlineKeyboardMarkup(inlKeyboard));
+		arts.setCaption(captionFactory(m.getFrom()));
 		
 		sendAudiobyReference(arts);
 		
@@ -115,7 +118,7 @@ public class PartyBot extends Bot{
 		
 		if(!active)
 			return;
-		
+
 		String[] values = c.getData().split(Constants.SEPARATOR);
 		CallBackCodes cbc = CallBackCodes.fromString(values[0]);
 		
@@ -250,6 +253,7 @@ public class PartyBot extends Bot{
 		
 		PhotoReferenceToSend prts = new PhotoReferenceToSend(boss, bigPhotoID);
 		prts.setReplyMarkup(new InlineKeyboardMarkup(inlKeyboard));
+		prts.setCaption(captionFactory(m.getFrom()));
 		
 		sendPhotobyReference(prts);
 	}
@@ -379,7 +383,7 @@ public class PartyBot extends Bot{
 		
 	}
 
-	public boolean aimpCommand(String command)
+	private boolean aimpCommand(String command)
 	{
 		try {
 			Runtime.getRuntime().exec("cmd /C \"\"C:\\Program Files (x86)\\AIMP\\AIMP.exe\"\"" + command);
@@ -392,13 +396,13 @@ public class PartyBot extends Bot{
 	}
 	
 	
-	public boolean control(Message m)
+	private boolean control(Message m)
 	{
 		return active && (!banned.contains(m.getFrom().getId()));
 	}
 	
 	
-	public void updateBanRegister(long evil)
+	private void updateBanRegister(long evil)
 	{
 		if(!banRegister.containsKey(evil))
 		{
@@ -414,7 +418,7 @@ public class PartyBot extends Bot{
 		return;
 	}
 	
-	public void downloadPhotos(List<PhotoSize> photos)
+	private void downloadPhotos(List<PhotoSize> photos)
 	{
 		String bigPhotoID = photos
 				.stream()
@@ -430,14 +434,14 @@ public class PartyBot extends Bot{
 		downloadFileFromTelegramServer(smallPhotoID, Constants.TILESFOLDER + smallPhotoID + ".png");
 	}
 	
-	public void addTrack(Audio music)
+	private void addTrack(Audio music)
 	{
 		File f = downloadFileFromTelegramServer(music, Constants.MUSICFOLDER + music.getFileID() + ".mp3");
 		aimpCommand("/INSERT " + f.getAbsolutePath());
 	}
 	
 	
-	public void zipPhotos()
+	private void zipPhotos()
 	{
 		try {
 			
@@ -476,8 +480,16 @@ public class PartyBot extends Bot{
 		}
 	}
 	
-	public void mosaic()
+	private void mosaic()
 	{
 		
 	}
+	
+	private String captionFactory(User u)
+	{
+		if(u.getUserName() != null)
+			return u.getUserName();
+		return u.getFirstName();
+	}
+	
 }
