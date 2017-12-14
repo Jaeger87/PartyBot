@@ -2,6 +2,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +16,7 @@ import com.botticelli.bot.request.methods.AudioReferenceToSend;
 import com.botticelli.bot.request.methods.DocumentFileToSend;
 import com.botticelli.bot.request.methods.DocumentReferenceToSend;
 import com.botticelli.bot.request.methods.MessageToSend;
+import com.botticelli.bot.request.methods.PhotoFileToSend;
 import com.botticelli.bot.request.methods.PhotoReferenceToSend;
 import com.botticelli.bot.request.methods.types.Audio;
 import com.botticelli.bot.request.methods.types.CallbackQuery;
@@ -482,6 +485,72 @@ public class PartyBot extends Bot{
 	
 	private void mosaic()
 	{
+		StringBuilder sb = new StringBuilder();
+		
+		/*
+		File dir = new File(Constants.TILESFOLDER);
+		
+		File[] directoryListing = dir.listFiles();
+		if (directoryListing == null)
+			return;
+
+		for (File child : directoryListing)
+			sb.append(child.getAbsolutePath() + " ");
+			
+		*/
+		
+		try {
+			Files.deleteIfExists(new File("mosaico.png").toPath());
+		} catch (IOException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		
+		Path source = Paths.get(Constants.TILESFOLDER);
+		try {
+			Files.walk(source).filter(Files::isRegularFile).forEach(f -> sb.append(f.toAbsolutePath().toString() + " "));
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	
+		
+		try 
+		{
+			Process process = Runtime.getRuntime()
+					.exec("magick montage " + sb.toString() 
+					+ "-shadow  -geometry +1+1  -texture wall3.jpg  mosaico.png");
+			process.waitFor();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try {
+			TimeUnit.MILLISECONDS.sleep(1500);
+		} catch (InterruptedException e) {
+			
+			e.printStackTrace();
+		}
+		
+		
+		Message m = sendPhotoFile(new PhotoFileToSend(boss, new File("mosaico.png")));
+		String fileId = m.getDocument().getFileID();
+		try {
+			TimeUnit.MILLISECONDS.sleep(800);
+		} catch (InterruptedException e) {
+			
+			e.printStackTrace();
+		}
+		
+		for(Long user : users)
+		{
+			sendPhotobyReference(new PhotoReferenceToSend(user, fileId));
+		}
 		
 	}
 	
