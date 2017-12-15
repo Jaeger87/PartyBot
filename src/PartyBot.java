@@ -308,6 +308,7 @@ public class PartyBot extends Bot{
 		{
 			users.remove(boss);
 			active = false;
+			aimpCommand("/STOP");
 			zipPhotos();
 			mosaic();
 			return;
