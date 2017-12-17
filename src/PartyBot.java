@@ -136,7 +136,6 @@ public class PartyBot extends Bot{
         case MUSICYES:
         	addTrack(c.getMessage().getAudio());
 			break;
-        
         case MUSICNO:
         	updateBanRegister(Long.parseLong(values[1]));
 	        break;
@@ -157,19 +156,16 @@ public class PartyBot extends Bot{
 
 	@Override
 	public void documentMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void gameMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void groupChatCreatedMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -185,43 +181,36 @@ public class PartyBot extends Bot{
 
 	@Override
 	public void invoiceMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void leftChatMemberMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void locationMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void newChatMemberMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void newChatMembersMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void newChatPhotoMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void newChatTitleMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -263,31 +252,26 @@ public class PartyBot extends Bot{
 
 	@Override
 	public void pinnedMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void preCheckOutQueryMessage(PreCheckoutQuery arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void shippingQueryMessage(ShippingQuery arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void stickerMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void successfulPaymentMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -366,19 +350,16 @@ public class PartyBot extends Bot{
 
 	@Override
 	public void venueMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void videoMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void videoNoteMessage(Message arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -476,10 +457,15 @@ public class PartyBot extends Bot{
 				sendDocumentbyReference(new DocumentReferenceToSend(user, fileId));
 			}
 			
-		} catch (ZipException e) {
+		} 
+		
+		catch (ZipException e) 
+		{
 			e.printStackTrace();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
+		} 
+		catch (IOException e1) 
+		{
+			
 			e1.printStackTrace();
 		}
 	}
@@ -487,18 +473,6 @@ public class PartyBot extends Bot{
 	private void mosaic()
 	{
 		StringBuilder sb = new StringBuilder();
-		
-		/*
-		File dir = new File(Constants.TILESFOLDER);
-		
-		File[] directoryListing = dir.listFiles();
-		if (directoryListing == null)
-			return;
-
-		for (File child : directoryListing)
-			sb.append(child.getAbsolutePath() + " ");
-			
-		*/
 		
 		try {
 			Files.deleteIfExists(new File("mosaico.png").toPath());
@@ -511,7 +485,7 @@ public class PartyBot extends Bot{
 		try {
 			Files.walk(source).filter(Files::isRegularFile).forEach(f -> sb.append(f.toAbsolutePath().toString() + " "));
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
+
 			e1.printStackTrace();
 		}
 	
