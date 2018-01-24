@@ -295,7 +295,7 @@ public class PartyBot extends Bot{
 		{
 			users.remove(boss);
 			active = false;
-			vlcCommand("/STOP");
+		//	vlcCommand("/STOP");
 			zipPhotos();
 			mosaic();
 			return;
@@ -371,12 +371,17 @@ public class PartyBot extends Bot{
 		
 	}
 
+	
+	String printText = Main.filePath + "script/enqueue.sh";
 	private boolean vlcCommand(String command)
 	{
 		String c = "/bin/bash " +"-c "+ "\"/usr/bin/vlc --one-instance "+ command +"\"";
 		System.out.println(c);
 		ProcessBuilder pb = new ProcessBuilder(c);
 		System.out.println(executeCommand(pb));
+		
+		System.out.println(executeCommand(new ProcessBuilder("bash", printText, command)));
+		
 		System.out.println(pb.toString());
 		System.out.println(pb.command().toString());
 		System.out.println(executeCommand(new ProcessBuilder("/bin/bash" ,"-c", "echo ", "dio")));
@@ -526,8 +531,10 @@ public class PartyBot extends Bot{
 		
 		try 
 		{
+			System.out.println("montage " + sb.toString() 
+					+ "-shadow  -geometry +1+1  -texture wall3.jpg  mosaico.png");
 			Process process = Runtime.getRuntime()
-					.exec("magick montage " + sb.toString() 
+					.exec("montage " + sb.toString() 
 					+ "-shadow  -geometry +1+1  -texture wall3.jpg  mosaico.png");
 			process.waitFor();
 		} catch (IOException e) {
