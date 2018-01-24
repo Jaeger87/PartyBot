@@ -1,6 +1,8 @@
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,6 +55,7 @@ public class PartyBot extends Bot{
 	public PartyBot(String token) throws FileNotFoundException {
 		super(token);
 
+		System.out.println(executeCommand(new ProcessBuilder("/bin/bash " +"-c "+ "/bin/echo "+ "dio")));
 		banRegister = new HashMap<>();
 		banned = new HashSet<>();
 		users = new HashSet<>();
@@ -292,7 +295,7 @@ public class PartyBot extends Bot{
 		{
 			users.remove(boss);
 			active = false;
-			aimpCommand("/STOP");
+			vlcCommand("/STOP");
 			zipPhotos();
 			mosaic();
 			return;
@@ -300,45 +303,45 @@ public class PartyBot extends Bot{
 		
 		if(m.getText().equals(Constants.PREVTRACK))
 		{
-			aimpCommand("/PREV");
+			vlcCommand("/PREV");
 			return;
 		}
 		
 		if(m.getText().equals(Constants.PLAY))
 		{
-			aimpCommand("/PLAY");
+			vlcCommand("/PLAY");
 			return;
 		}
 		
 		
 		if(m.getText().equals(Constants.PAUSE))
 		{
-			aimpCommand("/PAUSE");
+			vlcCommand("/PAUSE");
 			return;
 		}
 		
 		if(m.getText().equals(Constants.STOP))
 		{
-			aimpCommand("/STOP");
+			vlcCommand("/STOP");
 			return;
 		}
 		
 		if(m.getText().equals(Constants.NEXTTRACK))
 		{
-			aimpCommand("/NEXT");
+			vlcCommand("/NEXT");
 			return;
 		}
 		
 		if(m.getText().equals(Constants.VOLDOWN))
 		{
-			aimpCommand("/VOLDWN");
+			vlcCommand("/VOLDWN");
 			return;
 		}
 		
 		
 		if(m.getText().equals(Constants.VOLUP))
 		{
-			aimpCommand("/VOLUP");
+			vlcCommand("/VOLUP");
 			return;
 		}
 		MessageToSend mts = new MessageToSend(m.getChat().getId(), "Ecco il tastierino padrone");
@@ -368,15 +371,46 @@ public class PartyBot extends Bot{
 		
 	}
 
-	private boolean aimpCommand(String command)
+	private boolean vlcCommand(String command)
 	{
-		try {
-			Runtime.getRuntime().exec("cmd /C \"\"C:\\Program Files (x86)\\AIMP\\AIMP.exe\"\"" + command);
-		} catch (IOException e) {
-			e.printStackTrace();
+		String c = "/bin/bash " +"-c "+ "\"/usr/bin/vlc --one-instance "+ command +"\"";
+		System.out.println(c);
+		ProcessBuilder pb = new ProcessBuilder(c);
+		System.out.println(executeCommand(pb));
+		System.out.println(pb.toString());
+		System.out.println(pb.command().toString());
+		System.out.println(executeCommand(new ProcessBuilder("/bin/bash" ,"-c", "echo ", "dio")));
+		System.out.println(new ProcessBuilder("/bin/bash" ,"-c", "\"echo", "dio\"").command().toString());
+		return true;
+	}
+	
+	private static synchronized boolean executeCommand(ProcessBuilder pb)
+	{
+		
+		try 
+		{
+			pb.inheritIO();
+			Process p = pb.start();
+			System.out.println(p.toString());
+			p.waitFor();
+			
+			BufferedReader reader = 
+	                new BufferedReader(new InputStreamReader(p.getInputStream()));
+	StringBuilder builder = new StringBuilder();
+	String line = null;
+	while ( (line = reader.readLine()) != null) {
+	   builder.append(line);
+	   builder.append(System.getProperty("line.separator"));
+	}
+	System.out.println(builder.toString());
+			
+		}
+
+		catch (Exception e) 
+		{
+			System.out.println(e);
 			return false;
 		}
-		
 		return true;
 	}
 	
@@ -422,7 +456,7 @@ public class PartyBot extends Bot{
 	private void addTrack(Audio music)
 	{
 		File f = downloadFileFromTelegramServer(music, Constants.MUSICFOLDER + music.getFileID() + ".mp3");
-		aimpCommand("/INSERT " + f.getAbsolutePath());
+		vlcCommand("--playlist-enqueue " + f.getAbsolutePath());
 	}
 	
 	

@@ -25,6 +25,7 @@ public class Main {
 		}
 		MessageReceiver mr = new MessageReceiver(new PartyBot(tkn), 850, 1);
 		mr.ignoreEditedMessages();
+		System.out.println("CIAO mi sono avviato!!!!XD");
 		mr.start();
 	}
 }
