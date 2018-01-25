@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.botticelli.bot.Bot;
 import com.botticelli.bot.request.methods.AudioReferenceToSend;
@@ -428,35 +429,56 @@ public class PartyBot extends Bot{
 	
 	private void zipPhotos()
 	{
-		try {
-			
-			Files.deleteIfExists(new File("photos.zip").toPath());
-			
-			ZipFile zipFile = new ZipFile("photos.zip");			
+		try
+		{
 			ZipParameters parameters = new ZipParameters();
 			parameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
 
-			parameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
-			
-			zipFile.addFolder("photos", parameters);
-			
-			Message m = sendDocumentFile(new DocumentFileToSend(boss, zipFile.getFile()));
-			
-			String fileId = m.getDocument().getFileID();
-			
+			parameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_ULTRA);
 
-			try {
-				TimeUnit.MILLISECONDS.sleep(800);
-			} catch (InterruptedException e) {
-				
-				e.printStackTrace();
-			}
-			
-			for(Long user : users)
+			Path source = Paths.get(Constants.PHOTOFOLDER);
+			List<File> photosFile = new ArrayList<>();
+
+			try 
 			{
-				sendDocumentbyReference(new DocumentReferenceToSend(user, fileId));
+				photosFile = Files.walk(source).filter(Files::isRegularFile).map(p -> p.toFile())
+						.collect(Collectors.toList());
+			} catch (IOException e1) 
+			{
+
+				e1.printStackTrace();
 			}
-			
+			int limit = 100;
+			int zipFileNumber = 0;
+			int i = 0;
+			while ((limit - photosFile.size()) < 100) 
+			{
+				Files.deleteIfExists(new File("photos"+zipFileNumber+".zip").toPath());
+
+				
+				ZipFile zipFile = new ZipFile("photos"+zipFileNumber+".zip");
+				
+				for (; i < limit && i < photosFile.size(); i++) 
+					zipFile.addFile(photosFile.get(i), parameters);
+				Message m = null;
+				while (m == null)
+					m = sendDocumentFile(new DocumentFileToSend(boss, zipFile.getFile()));
+
+				String fileId = m.getDocument().getFileID();
+
+				try {
+					TimeUnit.MILLISECONDS.sleep(800);
+				} catch (InterruptedException e) {
+
+					e.printStackTrace();
+				}
+
+				for (Long user : users) {
+					sendDocumentbyReference(new DocumentReferenceToSend(user, fileId));
+				}
+				limit += 100;
+				zipFileNumber++;
+			}
 		} 
 		
 		catch (ZipException e) 
@@ -465,10 +487,9 @@ public class PartyBot extends Bot{
 		} 
 		catch (IOException e1) 
 		{
-			
 			e1.printStackTrace();
 		}
-	}
+}
 	
 	private void mosaic()
 	{
